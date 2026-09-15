@@ -1,0 +1,408 @@
+<title>MY WORK QUICK LAUNCHER 요약</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --ground:#eef1f5;
+    --sheet:#ffffff;
+    --ink:#1e293b;
+    --ink-soft:#3b4a63;
+    --muted:#64748b;
+    --line:#d6dee8;
+    --line-soft:#e6ecf3;
+    --accent:#2563eb;
+    --accent-ink:#1d4ed8;
+    --navy:#0f172a;
+    --navy-2:#1e293b;
+    --on-navy:#e8eef7;
+    --on-navy-mut:#9fb0c9;
+    --flag:#fff48f;
+    --flag-line:#e4c200;
+    --flag-ink:#5c4b00;
+    --ok:#0f766e;
+    --shadow:0 1px 2px rgba(15,23,42,.05), 0 8px 24px -12px rgba(15,23,42,.14);
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --ground:#0b1120;
+      --sheet:#131c2e;
+      --ink:#e7edf6;
+      --ink-soft:#c2cede;
+      --muted:#8a9ab4;
+      --line:#2a3852;
+      --line-soft:#202c42;
+      --accent:#5b8bff;
+      --accent-ink:#8fb0ff;
+      --navy:#05080f;
+      --navy-2:#111a2b;
+      --on-navy:#e8eef7;
+      --on-navy-mut:#93a4bf;
+      --flag:#e8d874;
+      --flag-line:#b99f1f;
+      --flag-ink:#26200a;
+      --ok:#4dd0c4;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -14px rgba(0,0,0,.6);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0b1120;
+    --sheet:#131c2e;
+    --ink:#e7edf6;
+    --ink-soft:#c2cede;
+    --muted:#8a9ab4;
+    --line:#2a3852;
+    --line-soft:#202c42;
+    --accent:#5b8bff;
+    --accent-ink:#8fb0ff;
+    --navy:#05080f;
+    --navy-2:#111a2b;
+    --on-navy:#e8eef7;
+    --on-navy-mut:#93a4bf;
+    --flag:#e8d874;
+    --flag-line:#b99f1f;
+    --flag-ink:#26200a;
+    --ok:#4dd0c4;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px -14px rgba(0,0,0,.6);
+  }
+
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{
+    margin:0;
+    background:var(--ground);
+    color:var(--ink);
+    font-family:"IBM Plex Sans KR","Malgun Gothic",system-ui,-apple-system,sans-serif;
+    font-size:14px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1040px;margin:0 auto;padding:30px 22px 56px;}
+
+  .mono{font-family:"IBM Plex Mono","SFMono-Regular",Consolas,monospace;}
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);font-weight:500;
+  }
+
+  /* ---------- header band ---------- */
+  .masthead{
+    background:linear-gradient(180deg,var(--navy),var(--navy-2));
+    color:var(--on-navy);
+    border-radius:14px;
+    padding:24px 26px;
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    gap:22px;
+    align-items:center;
+    box-shadow:var(--shadow);
+  }
+  .mark{width:52px;height:52px;display:block;flex:none;}
+  .masthead h1{
+    margin:0;
+    font-size:23px;
+    font-weight:700;
+    letter-spacing:.01em;
+    line-height:1.15;
+    text-wrap:balance;
+  }
+  .masthead .sub{margin:3px 0 0;color:var(--on-navy-mut);font-size:13px;}
+  .verplate{
+    text-align:right;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12px;
+    color:var(--on-navy-mut);
+    line-height:1.7;
+    white-space:nowrap;
+  }
+  .verplate b{color:var(--on-navy);font-weight:600;}
+
+  /* ---------- top: facts rail + changed ---------- */
+  .band{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-top:16px;
+  }
+  .panel{
+    background:var(--sheet);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px 18px;
+    box-shadow:var(--shadow);
+  }
+  .panel > h2{
+    margin:0 0 12px;
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--muted);font-weight:600;
+  }
+  .facts{display:grid;grid-template-columns:auto 1fr;gap:7px 14px;font-size:13px;}
+  .facts dt{color:var(--muted);}
+  .facts dd{margin:0;color:var(--ink-soft);font-weight:500;text-align:right;font-variant-numeric:tabular-nums;}
+  .facts dd .mono{font-size:12px;}
+
+  .fixes{list-style:none;margin:0;padding:0;display:grid;gap:8px;}
+  .fixes li{
+    display:grid;grid-template-columns:1fr auto;gap:10px;align-items:baseline;
+    font-size:12.5px;padding-bottom:8px;border-bottom:1px solid var(--line-soft);
+  }
+  .fixes li:last-child{border-bottom:0;padding-bottom:0;}
+  .fixes .was{color:var(--muted);}
+  .fixes .now{color:var(--ok);font-weight:600;font-size:11px;white-space:nowrap;font-family:"IBM Plex Mono",monospace;}
+
+  /* ---------- the four sections ---------- */
+  .sections-head{
+    margin:26px 0 12px;
+    display:flex;align-items:baseline;gap:12px;
+  }
+  .sections-head h2{margin:0;font-size:15px;font-weight:700;}
+  .sections-head .note{font-size:12px;color:var(--muted);}
+
+  .grid4{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .feature{
+    background:var(--sheet);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:15px 16px 16px;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    grid-template-rows:auto auto;
+    column-gap:13px;row-gap:6px;
+    box-shadow:var(--shadow);
+  }
+  .feature .n{
+    grid-row:1 / span 2;
+    font-family:"IBM Plex Mono",monospace;
+    font-weight:600;
+    font-size:15px;
+    color:var(--accent);
+    width:30px;height:30px;
+    border:1.5px solid var(--accent);
+    border-radius:8px;
+    display:grid;place-items:center;
+    align-self:start;
+  }
+  .feature h3{margin:2px 0 0;font-size:14px;font-weight:700;align-self:center;}
+  .feature p{margin:0;font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
+  .feature .tags{margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;}
+  .feature .tags span{
+    font-size:10.5px;
+    font-family:"IBM Plex Mono",monospace;
+    color:var(--muted);
+    border:1px solid var(--line);
+    border-radius:5px;
+    padding:1px 6px;
+    background:var(--ground);
+  }
+  .feature.flag .n{color:var(--flag-line);border-color:var(--flag-line);}
+  .feature.flag .chip{
+    display:inline-block;margin-top:9px;
+    background:var(--flag);color:var(--flag-ink);
+    border:1px solid var(--flag-line);
+    border-radius:5px;padding:2px 8px;
+    font-size:11px;font-weight:600;
+    font-family:"IBM Plex Sans KR",sans-serif;
+  }
+  .feature .metric{
+    margin-top:9px;font-family:"IBM Plex Mono",monospace;font-size:11px;
+    color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;
+  }
+  .feature .metric b{color:var(--ink);font-weight:600;}
+
+  /* ---------- reproduce footer ---------- */
+  .repro{
+    margin-top:22px;
+    background:var(--sheet);
+    border:1px solid var(--line);
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+  }
+  .repro h2{
+    margin:0;padding:12px 18px;
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600;
+    border-bottom:1px solid var(--line);
+  }
+  .repro .rows{display:grid;grid-template-columns:1fr 1fr;}
+  .repro .step{
+    padding:13px 18px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .repro .step:nth-child(odd){border-right:1px solid var(--line-soft);}
+  .repro .step:nth-last-child(-n+2){border-bottom:0;}
+  .repro .step .k{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;}
+  .repro .step code{
+    font-family:"IBM Plex Mono",monospace;font-size:12px;
+    color:var(--ink);
+    display:block;word-break:break-all;
+  }
+  .repro .step code .arrow{color:var(--accent);}
+  .repro .step .out{font-size:11px;color:var(--muted);margin-top:3px;}
+
+  .deliver{
+    margin-top:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+    font-size:12px;color:var(--muted);
+  }
+  .deliver b{color:var(--muted);font-weight:600;letter-spacing:.1em;text-transform:uppercase;font-size:10.5px;margin-right:2px;}
+  .deliver span{
+    font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+    color:var(--ink-soft);
+    background:var(--sheet);border:1px solid var(--line);border-radius:6px;padding:2px 8px;
+  }
+
+  footer{margin-top:26px;text-align:center;color:var(--muted);font-size:11px;font-family:"IBM Plex Mono",monospace;}
+
+  @media (max-width:760px){
+    .band,.grid4,.repro .rows{grid-template-columns:1fr;}
+    .repro .step:nth-child(odd){border-right:0;}
+    .repro .step:nth-last-child(2){border-bottom:1px solid var(--line-soft);}
+    .masthead{grid-template-columns:auto 1fr;}
+    .verplate{grid-column:1 / -1;text-align:left;}
+    .facts dd{text-align:left;}
+  }
+  @media print{
+    body{background:#fff;}
+    .wrap{padding:0;max-width:none;}
+    .panel,.feature,.repro,.masthead{box-shadow:none;}
+    .masthead{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .feature,.panel,.repro{break-inside:avoid;}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <svg class="mark" viewBox="0 0 256 256" role="img" aria-label="앱 아이콘">
+      <rect x="2" y="2" width="252" height="252" rx="52" fill="#0f172a"/>
+      <rect x="34" y="34" width="188" height="188" rx="40" fill="#2563eb"/>
+      <polygon points="150,52 96,140 132,140 110,204 170,116 132,116" fill="#fff"/>
+    </svg>
+    <div>
+      <div class="eyebrow" style="color:var(--on-navy-mut)">프로젝트 요약 · 한 장</div>
+      <h1>MY WORK QUICK LAUNCHER</h1>
+      <p class="sub">자동차 공업사·보험 견적 업무를 한 창에서 — 바로가기 · 시트 비교 · 문구 복사 · 바탕화면 검색</p>
+    </div>
+    <div class="verplate">
+      <b>v2.0.0</b><br>
+      BUILD 20260915<br>
+      Windows x64
+    </div>
+  </header>
+
+  <div class="band">
+    <section class="panel">
+      <h2>스택 &amp; 산출물</h2>
+      <dl class="facts">
+        <dt>언어 / UI</dt><dd>C# 13 · Windows Forms</dd>
+        <dt>타깃</dt><dd class="mono">net10.0-windows</dd>
+        <dt>빌드 SDK</dt><dd class="mono">.NET SDK 10.0.302</dd>
+        <dt>외부 NuGet 패키지</dt><dd>0 개 (BCL만)</dd>
+        <dt>소스</dt><dd>11 파일 · 약 3,100 줄</dd>
+        <dt>배포 exe</dt><dd>self-contained 단일 · <span class="mono">47 MB</span></dd>
+        <dt>대상 PC 런타임</dt><dd>설치 불필요</dd>
+        <dt>데이터</dt><dd class="mono">%APPDATA%\…\data.json</dd>
+      </dl>
+    </section>
+
+    <section class="panel">
+      <h2>1차 버전(Codex) → v2 에서 고친 것</h2>
+      <ul class="fixes">
+        <li><span class="was">문구 더블클릭 편집이 안 됨 (Button은 DoubleClick 미발생)</span><span class="now">FIXED</span></li>
+        <li><span class="was">스캔 중 바탕화면 필터 클릭이 먹통</span><span class="now">FIXED</span></li>
+        <li><span class="was">썸네일 UI 스레드 동기 로딩 → 멈칫</span><span class="now">FIXED</span></li>
+        <li><span class="was">수동 픽셀 레이아웃 → 창 키우면 카드 잘림</span><span class="now">FIXED</span></li>
+        <li><span class="was">마이그레이션이 앱→웹으로 강제 변환</span><span class="now">REMOVED</span></li>
+        <li><span class="was">저장 도중 중단 시 data.json 손상 위험</span><span class="now">ATOMIC</span></li>
+        <li><span class="was">"항상 위"가 저장돼 계속 다른 창(브라우저·카톡)을 가림</span><span class="now">20260909</span></li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="sections-head">
+    <h2>기능 — 창의 4개 섹션 그대로</h2>
+    <span class="note">번호는 실제 화면의 위→아래 순서입니다</span>
+  </div>
+
+  <div class="grid4">
+    <article class="feature">
+      <div class="n">1</div>
+      <h3>바로가기</h3>
+      <div>
+        <p>프로그램 · 웹사이트 · 폴더/자료를 한 박스로. 카드 클릭 = 실행, 우클릭 = 편집/삭제,
+           드래그로 순서 변경, Explorer에서 끌어다 놓으면 종류를 판별해 등록.</p>
+        <div class="tags"><span>IconData(base64)</span><span>이름 바꿔도 아이콘 유지</span><span>.lnk / .url</span></div>
+      </div>
+    </article>
+
+    <article class="feature flag">
+      <div class="n">2</div>
+      <h3>시트 분석 TOOL</h3>
+      <div>
+        <p>A시트(공임비교분석) · B시트(업로드 로그) URL을 하나씩 입력 → 두 표의
+           <b>2번째 열(작업항목)</b>을 비교 → A시트 전체 견적을 팝업으로.</p>
+        <span class="chip">B시트에 없는 작업항목 = 노란색 음영 → 클릭하면 복사</span>
+        <div class="metric">검증 <b>A 328행</b> · <b>B 109행</b> · 누락 <b>301건</b></div>
+      </div>
+    </article>
+
+    <article class="feature">
+      <div class="n">3</div>
+      <h3>업무 메모 / 자주 쓰는 문구</h3>
+      <div>
+        <p>그룹 필터 + 타일. 좌클릭 = 즉시 클립보드 복사(마지막 선택 파란색),
+           더블클릭·우클릭 = 편집. 클립보드 점유 시 4회 재시도.</p>
+        <div class="tags"><span>견적 · 도장 · 보험 · 작업지시</span><span>SetText ×4 → SetDataObject</span></div>
+      </div>
+    </article>
+
+    <article class="feature">
+      <div class="n">4</div>
+      <h3>바탕화면 파일검색</h3>
+      <div>
+        <p>바탕화면에 <b>바로 보이는 파일만</b>(하위 폴더 제외). 확장자 8필터 + 파일명,
+           최근 수정순. 1클릭 = Explorer에서 선택, 더블클릭 = 실행.</p>
+        <div class="tags"><span>썸네일 백그라운드+캐시</span><span>Generation으로 오래된 결과 폐기</span><span>표시 최대 30</span></div>
+      </div>
+    </article>
+  </div>
+
+  <section class="repro">
+    <h2>새 PC에서 재현 — REPRODUCTION_GUIDE.md</h2>
+    <div class="rows">
+      <div class="step">
+        <div class="k">빌드</div>
+        <code>dotnet build -c Release</code>
+        <div class="out">→ 경고 0 / 오류 0</div>
+      </div>
+      <div class="step">
+        <div class="k">배포 exe</div>
+        <code>publish.cmd</code>
+        <div class="out"><span class="arrow">→</span> publish\MyWorkQuickLauncher.exe (47 MB)</div>
+      </div>
+      <div class="step">
+        <div class="k">배포 zip</div>
+        <code>installer\pack.ps1</code>
+        <div class="out"><span class="arrow">→</span> dist\MyWorkQuickLauncher-2.0.0-win-x64.zip</div>
+      </div>
+      <div class="step">
+        <div class="k">사용자 설치</div>
+        <code>exe 더블클릭  ·  또는  INSTALL.cmd</code>
+        <div class="out">무설치 / 바로가기+제거항목 · 관리자 불필요</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="deliver">
+    <b>산출물</b>
+    <span>README.md</span>
+    <span>REPRODUCTION_GUIDE.md</span>
+    <span>installer/</span>
+    <span>assets/app.ico</span>
+    <span>dist/*.zip</span>
+  </div>
+
+  <footer>MY WORK QUICK LAUNCHER · v2.0.0 · BUILD 20260915 · 데이터는 %APPDATA%\MyWorkQuickLauncher 에 보존</footer>
+
+</div>
