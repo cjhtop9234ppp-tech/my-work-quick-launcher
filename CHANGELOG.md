@@ -2,6 +2,16 @@
 
 이 프로젝트는 [시맨틱 버전](https://semver.org/lang/ko/)을 따릅니다.
 
+## [v1.1.0]
+
+### 추가
+- **파일자동읽기 폴더지정** (5번 섹션): 지정한 폴더(기본 힌트: 다운로드)를 감시하다가 이미지가
+  포함된 zip이 도착하면 등록된 바로가기 중 선택한 프로그램을 그 zip 경로와 함께 자동 실행한다.
+  뒤이어 압축 프로그램(예: 알집)이 띄우는 "압축풀기" 류 확인 창은 제목의 일부 문자열을 기준으로
+  자동 감지해 닫는다(`FileSystemWatcher` + `EnumWindows`/`WM_CLOSE`, 외부 라이브러리 없음).
+- 관련 설정(`WatchFolder`, `WatchEnabled`, `WatchProgramShortcutId`, `WatchCloseWindowTitleContains`)이
+  `data.json`에 저장되어 다음 실행 시 복원된다.
+
 ## [v1.0.0] - 최초 정식 공개
 
 ### 주요 기능

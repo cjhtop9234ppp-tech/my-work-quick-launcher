@@ -2,7 +2,7 @@
 
 > 이 문서 하나만 보고 새 PC에서 그대로 재현할 수 있도록 작성했습니다.
 > 소스코드는 요약 없이 전문을 포함합니다(§6).
-> 문서 기준 버전: **v2.0.0 / BUILD 20260915**
+> 문서 기준 버전: **v2.1.0(내부) / 공개 v1.1.0 / BUILD 20260916**
 
 ---
 
@@ -38,7 +38,11 @@ Windows 개인 업무용 **퀵 런처**. 자주 쓰는 프로그램·웹사이�
 4. **바탕화면 파일검색** — 바탕화면(및 OneDrive\Desktop) **최상위 파일만**(하위 폴더 제외).
    확장자 필터 8종 + 파일명 검색, 최근 수정순, 이미지 썸네일(백그라운드 로딩),
    1클릭 = Explorer에서 선택, 더블클릭 = 실행. 검색은 Generation 번호로 오래된 결과 폐기.
-5. 공통 — "항상 위"(세션 한정, 저장 안 함 — 시작 시 항상 꺼짐), 미니모드, 창 위치/크기 저장·복원(다중 모니터 보정),
+5. **파일자동읽기 폴더지정** (v1.1.0 추가) — 지정한 폴더(기본 힌트: 다운로드)를 `FileSystemWatcher`로
+   감시하다가 이미지가 포함된 `.zip`이 도착하면, 등록된 바로가기 중 선택한 프로그램을 그 zip 경로를
+   인자로 붙여 자동 실행. 뒤이어 압축 프로그램이 띄우는 "압축풀기" 류 확인 창은 제목에 포함된
+   문자열로 감지해 `WM_CLOSE`로 자동으로 닫는다(최대 10초 동안 폴링).
+6. 공통 — "항상 위"(세션 한정, 저장 안 함 — 시작 시 항상 꺼짐), 미니모드, 창 위치/크기 저장·복원(다중 모니터 보정),
    `%APPDATA%` 원자적 저장(임시파일 → 교체), `launcher.log` 이벤트 로그,
    커서 위치 기준 휠 스크롤(`IMessageFilter`).
 
@@ -59,6 +63,7 @@ Windows 개인 업무용 **퀵 런처**. 자주 쓰는 프로그램·웹사이�
 │                                   지오메트리/미니모드/클립보드
 ├── MainForm.DesktopSearch.cs       partial MainForm: 4.바탕화면 파일검색(스캔/필터/렌더/썸네일)
 ├── MainForm.SheetAnalysis.cs       partial MainForm: 2.시트 분석 TOOL 섹션 + 실행 로직
+├── MainForm.FolderWatch.cs         partial MainForm: 5.파일자동읽기 폴더지정 (v1.1.0 추가)
 ├── SheetAnalysis.cs                SheetRow(record) + SheetSource(HTTP fetch + HTML 표 파서)
 ├── SheetAnalysisDialog.cs          결과 팝업(DataGridView, 노란색 음영, 클릭 복사)
 ├── Dialogs.cs                      ShortcutDialog(바로가기 편집) + NoteDialog(문구 편집)
@@ -89,6 +94,7 @@ Windows 개인 업무용 **퀵 런처**. 자주 쓰는 프로그램·웹사이�
 | `MainForm.cs` | 창 골격, `RebuildStack()`(데이터 기준 UI 재생성), `ApplyResponsiveWidths()`(FlowLayoutPanel 폭 고정), 바로가기 CRUD, 문구 CRUD/복사, 드래그드롭/순서변경, 창 지오메트리/미니모드 |
 | `MainForm.DesktopSearch.cs` | 바탕화면 최상위 스캔(비재귀), 확장자 필터 정의/적용, 결과 30개 렌더, 썸네일 백그라운드 로딩+캐시, 단일/더블클릭 분기 |
 | `MainForm.SheetAnalysis.cs` | 시트 분석 섹션 UI, `RunSheetAnalysis()`(두 URL 동시 fetch → 작업항목 집합 차집합 → 팝업) |
+| `MainForm.FolderWatch.cs` | 5.파일자동읽기 폴더지정 UI, `FileSystemWatcher`로 zip 감지 → 이미지 포함 확인 → 등록된 프로그램 실행 → 압축 확인 창 자동 닫기 |
 | `SheetAnalysis.cs` | `HttpClient`(정적 재사용, gzip 자동 해제), 정규식으로 `<tr class='tableRow'>` 행에서 6칸 파싱, `ItemKey`(공백 제거 비교키) |
 | `SheetAnalysisDialog.cs` | `DataGridView` 6열, 누락 행 노란색, 셀 클릭→복사, 우클릭 메뉴, "누락만 보기"/"전체 복사" |
 | `Dialogs.cs` | 절대좌표 배치의 고정 크기 모달 2개(바로가기/문구) |
@@ -169,7 +175,11 @@ NuGet `PackageReference`가 **하나도 없습니다.** BCL과 Windows Desktop(W
     "Geometry": "1000x740+80+60",       // "WxH+X+Y" (일반 모드 창)
     "MiniGeometry": "320x260+80+60",    // 미니 모드 창
     "LeftSheetUrl": "",                 // 시트 분석 A시트 마지막 입력 URL
-    "RightSheetUrl": ""                 // 시트 분석 B시트 마지막 입력 URL
+    "RightSheetUrl": "",                // 시트 분석 B시트 마지막 입력 URL
+    "WatchFolder": "",                  // 감시 폴더 (v1.1.0, 비우면 미사용)
+    "WatchEnabled": false,              // 자동 감시 사용 여부 (v1.1.0)
+    "WatchProgramShortcutId": "",       // zip 도착 시 실행할 바로가기 Id (v1.1.0)
+    "WatchCloseWindowTitleContains": "압축풀기"  // 자동으로 닫을 창 제목(포함 문자열) (v1.1.0)
   }
 }
 ```
@@ -179,7 +189,7 @@ NuGet `PackageReference`가 **하나도 없습니다.** BCL과 Windows Desktop(W
 {
   "Shortcuts": [],
   "Notes": [ { "Id": "<GUID>", "Title": "여기에 자주 쓰는 문구를 추가하세요", "Text": "", "Group": "일반" } ],
-  "Settings": { "MiniMode": false, "Geometry": "1000x740+80+60", "MiniGeometry": "320x260+80+60", "LeftSheetUrl": "", "RightSheetUrl": "" }
+  "Settings": { "MiniMode": false, "Geometry": "1000x740+80+60", "MiniGeometry": "320x260+80+60", "LeftSheetUrl": "", "RightSheetUrl": "", "WatchFolder": "", "WatchEnabled": false, "WatchProgramShortcutId": "", "WatchCloseWindowTitleContains": "압축풀기" }
 }
 ```
 
@@ -242,10 +252,10 @@ powershell -ExecutionPolicy Bypass -File installer\pack.ps1
 
 ## 6. 핵심 소스코드 전체
 
-> 아래는 v2.0.0 최종본의 **전문**입니다. 순서: A) csproj → B) Program.cs → C) Model.cs →
+> 아래는 v1.1.0(내부 v2.1.0) 최종본의 **전문**입니다. 순서: A) csproj → B) Program.cs → C) Model.cs →
 > D) Native.cs → E) Theme.cs → F) MainForm.cs → G) MainForm.DesktopSearch.cs →
 > H) MainForm.SheetAnalysis.cs → I) SheetAnalysis.cs → J) SheetAnalysisDialog.cs →
-> K) Dialogs.cs → L) publish.cmd → M) installer 스크립트
+> K) Dialogs.cs → L) publish.cmd → M) installer 스크립트 → N) MainForm.FolderWatch.cs(v1.1.0 추가)
 
 ### A. `MyWorkQuickLauncher.csproj`
 
@@ -393,6 +403,16 @@ public sealed class AppSettings
     /// <summary>시트 분석 Tool에서 마지막으로 사용한 URL(다음 실행 시 복원).</summary>
     public string LeftSheetUrl { get; set; } = "";
     public string RightSheetUrl { get; set; } = "";
+
+    /// <summary>파일자동읽기 폴더지정: 이 폴더에 새 zip이 도착하면 감시한다(예: 다운로드 폴더).</summary>
+    public string WatchFolder { get; set; } = "";
+    public bool WatchEnabled { get; set; }
+
+    /// <summary>zip 도착 시 실행할 바로가기(App 종류)의 Id. Shortcuts 목록에서 선택한다.</summary>
+    public string WatchProgramShortcutId { get; set; } = "";
+
+    /// <summary>이 문자열을 제목에 포함한 창(예: 알집의 "압축풀기")이 뜨면 자동으로 닫는다. 비우면 끔.</summary>
+    public string WatchCloseWindowTitleContains { get; set; } = "압축풀기";
 }
 
 public sealed class AppData
@@ -495,6 +515,7 @@ public static class AppStore
 ```csharp
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace MyWorkQuickLauncher;
 
@@ -516,6 +537,46 @@ internal static class Native
 
     [DllImport("user32.dll")] private static extern bool DestroyIcon(IntPtr hIcon);
     [DllImport("user32.dll")] internal static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern int GetWindowTextLength(IntPtr hWnd);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
+    [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr hWnd);
+    [DllImport("user32.dll")] private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+    private const uint WM_CLOSE = 0x0010;
+
+    /// <summary>보이는 최상위 창 중 제목에 <paramref name="titleContains"/>가 포함된 것을 모두 찾는다. (v1.1.0)</summary>
+    internal static List<IntPtr> FindVisibleWindowsByTitle(string titleContains)
+    {
+        var found = new List<IntPtr>();
+        if (string.IsNullOrWhiteSpace(titleContains)) return found;
+
+        EnumWindows((hWnd, _) =>
+        {
+            try
+            {
+                if (!IsWindowVisible(hWnd)) return true;
+                int len = GetWindowTextLength(hWnd);
+                if (len == 0) return true;
+                var sb = new StringBuilder(len + 1);
+                GetWindowText(hWnd, sb, sb.Capacity);
+                if (sb.ToString().Contains(titleContains, StringComparison.OrdinalIgnoreCase))
+                    found.Add(hWnd);
+            }
+            catch
+            {
+                // 개별 창 조회 실패는 전체 열거를 멈추지 않는다.
+            }
+            return true;
+        }, IntPtr.Zero);
+
+        return found;
+    }
+
+    /// <summary>창에 닫기(WM_CLOSE)를 보낸다. 강제 종료가 아니라 창 자신의 닫기 처리를 그대로 따른다. (v1.1.0)</summary>
+    internal static void RequestCloseWindow(IntPtr hWnd) => PostMessage(hWnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
 
     private const uint SHGFI_ICON = 0x000000100;
     private const uint SHGFI_LARGEICON = 0x000000000;
@@ -735,7 +796,7 @@ namespace MyWorkQuickLauncher;
 
 public sealed partial class MainForm : Form
 {
-    private const string BuildLabel = "20260915";
+    private const string BuildLabel = "20260916";
 
     private readonly AppData _data;
     private bool _miniMode;
@@ -799,6 +860,7 @@ public sealed partial class MainForm : Form
                 _iconDataDirty = false;
             }
             RunDesktopScan();
+            ApplyWatchState();
         };
         ResizeEnd += (_, _) => SaveGeometry();
     }
@@ -992,6 +1054,7 @@ public sealed partial class MainForm : Form
             AddRow(BuildSheetAnalysisSection());
             AddRow(BuildNotesSection());
             AddRow(BuildDesktopSection());
+            AddRow(BuildFolderWatchSection());
         }
 
         _stack.ResumeLayout(true);
@@ -1957,6 +2020,7 @@ public sealed partial class MainForm : Form
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
         CancelDesktopScan();
+        StopWatching();
         _statusTimer?.Stop();
         _statusTimer?.Dispose();
         SaveGeometry();
@@ -3725,6 +3789,407 @@ Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags
 Type: dirifempty; Name: "{app}"
 ```
 
+### N. `MainForm.FolderWatch.cs` (v1.1.0에서 추가)
+
+```csharp
+using System.Diagnostics;
+using System.IO.Compression;
+
+namespace MyWorkQuickLauncher;
+
+/// <summary>
+/// "5. 파일자동읽기 폴더지정" — 지정한 폴더(예: 다운로드)에 그림 파일이 든 zip이 도착하면
+/// 등록해둔 프로그램(예: 중복 사진 정리 도구)을 그 zip과 함께 실행하고, 뒤이어 뜨는
+/// 압축 프로그램의 "압축풀기" 류 창은 자동으로 닫아준다.
+/// </summary>
+public sealed partial class MainForm
+{
+    private TextBox _watchFolderBox = null!;
+    private ComboBox _watchProgramCombo = null!;
+    private TextBox _watchCloseTitleBox = null!;
+    private CheckBox _watchEnabledCheck = null!;
+    private Label _watchStatus = null!;
+
+    private FileSystemWatcher? _folderWatcher;
+    private readonly HashSet<string> _watchProcessedFiles = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _watchLock = new();
+
+    private Control BuildFolderWatchSection()
+    {
+        var panel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            RowCount = 4,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            BackColor = Theme.Card,
+            BorderStyle = BorderStyle.FixedSingle,
+            Padding = new Padding(12, 10, 12, 10),
+        };
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        for (int i = 0; i < 4; i++)
+            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+        string downloadsHint = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+
+        // ---- 감시 폴더 ----
+        panel.Controls.Add(WatchFieldLabel("감시 폴더 (URL 자리에 경로 입력)"), 0, 0);
+
+        var folderRow = new TableLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            ColumnCount = 2,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            BackColor = Theme.Card,
+            Margin = new Padding(0, 3, 0, 3),
+        };
+        folderRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        folderRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
+        _watchFolderBox = new TextBox
+        {
+            Dock = DockStyle.Fill,
+            Font = Theme.Font9,
+            Text = _data.Settings.WatchFolder,
+            PlaceholderText = downloadsHint + "  (예: 다운로드 폴더)",
+        };
+        folderRow.Controls.Add(_watchFolderBox, 0, 0);
+
+        var browse = Theme.ActionButton("찾아보기");
+        browse.Margin = new Padding(6, 0, 0, 0);
+        browse.Click += (_, _) =>
+        {
+            using var dialog = new FolderBrowserDialog
+            {
+                Description = "감시할 폴더 선택 (예: 다운로드)",
+                SelectedPath = Directory.Exists(_watchFolderBox.Text) ? _watchFolderBox.Text : downloadsHint,
+            };
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+                _watchFolderBox.Text = dialog.SelectedPath;
+        };
+        folderRow.Controls.Add(browse, 1, 0);
+        panel.Controls.Add(folderRow, 1, 0);
+
+        // ---- 실행할 프로그램 ----
+        panel.Controls.Add(WatchFieldLabel("그림이 든 zip 도착 시 실행할 프로그램"), 0, 1);
+        _watchProgramCombo = new ComboBox
+        {
+            Dock = DockStyle.Fill,
+            DropDownStyle = ComboBoxStyle.DropDownList,
+            Font = Theme.Font9,
+        };
+        panel.Controls.Add(_watchProgramCombo, 1, 1);
+
+        // ---- 자동으로 닫을 창 제목 ----
+        panel.Controls.Add(WatchFieldLabel("자동으로 닫을 압축 창 제목(포함 문자열)"), 0, 2);
+        _watchCloseTitleBox = new TextBox
+        {
+            Dock = DockStyle.Fill,
+            Font = Theme.Font9,
+            Text = _data.Settings.WatchCloseWindowTitleContains,
+            PlaceholderText = "예: 압축풀기  (비우면 이 동작을 끕니다)",
+        };
+        panel.Controls.Add(_watchCloseTitleBox, 1, 2);
+
+        // ---- 사용 여부 / 저장 / 상태 ----
+        var actions = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            Margin = new Padding(0, 8, 0, 0),
+        };
+
+        _watchEnabledCheck = new CheckBox
+        {
+            Text = "자동 감시 사용",
+            Checked = _data.Settings.WatchEnabled,
+            AutoSize = true,
+            Margin = new Padding(0, 6, 14, 0),
+        };
+        actions.Controls.Add(_watchEnabledCheck);
+
+        var save = Theme.FlatButton("저장", Theme.Accent, Color.White);
+        save.Margin = new Padding(0, 0, 12, 0);
+        save.Click += (_, _) => SaveWatchSettings();
+        actions.Controls.Add(save);
+
+        _watchStatus = new Label
+        {
+            AutoSize = true,
+            ForeColor = Theme.Muted,
+            Font = Theme.Font8,
+            Margin = new Padding(0, 7, 0, 0),
+        };
+        actions.Controls.Add(_watchStatus);
+
+        panel.Controls.Add(actions, 1, 3);
+
+        RefreshWatchProgramOptions();
+        RefreshWatchStatusLabel();
+
+        return SectionShell("5. 파일자동읽기 폴더지정", null, null, panel);
+    }
+
+    private static Label WatchFieldLabel(string text) => new()
+    {
+        Text = text,
+        AutoSize = true,
+        ForeColor = Theme.Text,
+        Font = Theme.Font8,
+        Anchor = AnchorStyles.Left,
+        Margin = new Padding(0, 6, 12, 6),
+    };
+
+    private void RefreshWatchProgramOptions()
+    {
+        if (_watchProgramCombo == null) return;
+
+        var apps = _data.Shortcuts.Where(x => x.Kind == ShortcutKind.App).OrderBy(x => x.Order).ToList();
+
+        _watchProgramCombo.DataSource = null;
+        _watchProgramCombo.Items.Clear();
+
+        if (apps.Count == 0)
+        {
+            _watchProgramCombo.Enabled = false;
+            return;
+        }
+
+        _watchProgramCombo.Enabled = true;
+        _watchProgramCombo.DisplayMember = "Name";
+        _watchProgramCombo.ValueMember = "Id";
+        _watchProgramCombo.DataSource = apps;
+
+        var match = apps.FirstOrDefault(x => x.Id == _data.Settings.WatchProgramShortcutId);
+        _watchProgramCombo.SelectedItem = match ?? apps[0];
+    }
+
+    private void RefreshWatchStatusLabel()
+    {
+        if (_watchStatus == null) return;
+        _watchStatus.Text = _folderWatcher != null
+            ? $"감시 중: {_data.Settings.WatchFolder}"
+            : "감시 꺼짐";
+    }
+
+    private void SaveWatchSettings()
+    {
+        string folder = _watchFolderBox.Text.Trim();
+        if (folder.Length == 0)
+            folder = _watchFolderBox.PlaceholderText.Split(' ')[0];
+
+        if (!Directory.Exists(folder))
+        {
+            MessageBox.Show($"폴더를 찾을 수 없습니다.\n\n{folder}", "경로 확인",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        if (_watchEnabledCheck.Checked && _watchProgramCombo.SelectedItem is not ShortcutItem)
+        {
+            MessageBox.Show(
+                "실행할 프로그램을 선택하세요.\n(먼저 '1. 바로가기'에 프로그램을 등록해야 목록에 나타납니다)",
+                "프로그램 선택 필요", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        _data.Settings.WatchFolder = folder;
+        _data.Settings.WatchProgramShortcutId = (_watchProgramCombo.SelectedItem as ShortcutItem)?.Id ?? "";
+        _data.Settings.WatchCloseWindowTitleContains = _watchCloseTitleBox.Text.Trim();
+        _data.Settings.WatchEnabled = _watchEnabledCheck.Checked;
+
+        Persist();
+        ApplyWatchState();
+        Flash("자동 감시 설정을 저장했습니다.");
+        AppStore.Log($"[WATCH] settings saved folder={folder} enabled={_data.Settings.WatchEnabled}");
+    }
+
+    /// <summary>저장된 설정에 맞춰 감시를 다시 시작/중지한다. 앱 시작 시와 설정 저장 시 호출.</summary>
+    private void ApplyWatchState()
+    {
+        StopWatching();
+        if (_data.Settings.WatchEnabled && Directory.Exists(_data.Settings.WatchFolder))
+            StartWatching(_data.Settings.WatchFolder);
+        RefreshWatchStatusLabel();
+    }
+
+    private void StartWatching(string folder)
+    {
+        try
+        {
+            var watcher = new FileSystemWatcher(folder, "*.zip")
+            {
+                IncludeSubdirectories = false,
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite,
+            };
+            watcher.Created += (_, e) => HandleNewZip(e.FullPath);
+            watcher.Renamed += (_, e) => HandleNewZip(e.FullPath);
+            watcher.Error += (_, e) => AppStore.Log("[WATCH] watcher error", e.GetException());
+            watcher.EnableRaisingEvents = true;
+            _folderWatcher = watcher;
+            AppStore.Log($"[WATCH] started {folder}");
+        }
+        catch (Exception ex)
+        {
+            AppStore.Log("[WATCH] start failed", ex);
+            _folderWatcher = null;
+        }
+    }
+
+    private void StopWatching()
+    {
+        if (_folderWatcher == null) return;
+        try
+        {
+            _folderWatcher.EnableRaisingEvents = false;
+            _folderWatcher.Dispose();
+        }
+        catch
+        {
+            // ignore
+        }
+        _folderWatcher = null;
+    }
+
+    /// <summary>FileSystemWatcher 콜백(백그라운드 스레드)에서 호출된다. 중복 처리 방지 후 비동기로 넘긴다.</summary>
+    private void HandleNewZip(string path)
+    {
+        if (!path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase)) return;
+
+        lock (_watchLock)
+        {
+            if (!_watchProcessedFiles.Add(path)) return;
+        }
+
+        _ = Task.Run(() => ProcessNewZipAsync(path));
+    }
+
+    private async Task ProcessNewZipAsync(string path)
+    {
+        try
+        {
+            if (!await WaitUntilReadableAsync(path, TimeSpan.FromSeconds(30)))
+            {
+                AppStore.Log($"[WATCH] gave up waiting for file to finish: {path}");
+                return;
+            }
+
+            if (!ZipContainsImage(path))
+            {
+                AppStore.Log($"[WATCH] skip (이미지 없음) {Path.GetFileName(path)}");
+                return;
+            }
+
+            AppStore.Log($"[WATCH] zip 감지: {path}");
+            try { BeginInvoke(new Action(() => LaunchWatchProgram(path))); }
+            catch (ObjectDisposedException) { return; } // 창이 이미 닫힘
+
+            // 알집 등 압축 프로그램이 뒤이어 "압축풀기" 류 창을 띄우면 잠깐 지켜보다 자동으로 닫는다.
+            string titleFilter = _data.Settings.WatchCloseWindowTitleContains;
+            await CloseSpawnedWindowsAsync(titleFilter, TimeSpan.FromSeconds(10));
+        }
+        catch (Exception ex)
+        {
+            AppStore.Log("[WATCH] 처리 실패", ex);
+        }
+    }
+
+    private static async Task<bool> WaitUntilReadableAsync(string path, TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            try
+            {
+                using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                return stream.Length > 0;
+            }
+            catch (IOException)
+            {
+                await Task.Delay(500);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private static bool ZipContainsImage(string path)
+    {
+        try
+        {
+            using var archive = ZipFile.OpenRead(path);
+            return archive.Entries.Any(entry => IsImageExtension(Path.GetExtension(entry.FullName)));
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private void LaunchWatchProgram(string zipPath)
+    {
+        var item = _data.Shortcuts.FirstOrDefault(x =>
+            x.Id == _data.Settings.WatchProgramShortcutId && x.Kind == ShortcutKind.App);
+
+        if (item == null)
+        {
+            AppStore.Log("[WATCH] 실행할 프로그램이 지정되지 않음");
+            Flash("자동 감시: 실행할 프로그램이 지정되지 않았습니다.");
+            return;
+        }
+
+        try
+        {
+            string extraArgs = string.IsNullOrWhiteSpace(item.Arguments) ? "" : item.Arguments + " ";
+            var start = new ProcessStartInfo
+            {
+                FileName = item.Path,
+                Arguments = $"{extraArgs}\"{zipPath}\"",
+                UseShellExecute = true,
+            };
+            Process.Start(start);
+            AppStore.Log($"[WATCH] 실행: {item.Name} <- {zipPath}");
+            Flash($"자동 감시: '{item.Name}' 실행 ({Path.GetFileName(zipPath)})");
+        }
+        catch (Exception ex)
+        {
+            AppStore.Log("[WATCH] 프로그램 실행 실패", ex);
+        }
+    }
+
+    /// <summary>제목에 <paramref name="titleContains"/>가 포함된 창을 일정 시간 지켜보다 뜨면 자동으로 닫는다.</summary>
+    private static async Task CloseSpawnedWindowsAsync(string titleContains, TimeSpan timeout)
+    {
+        if (string.IsNullOrWhiteSpace(titleContains)) return;
+
+        var closed = new HashSet<IntPtr>();
+        var deadline = DateTime.UtcNow + timeout;
+
+        while (DateTime.UtcNow < deadline)
+        {
+            foreach (var hWnd in Native.FindVisibleWindowsByTitle(titleContains))
+            {
+                if (closed.Add(hWnd))
+                {
+                    Native.RequestCloseWindow(hWnd);
+                    AppStore.Log($"[WATCH] '{titleContains}' 포함 창 닫기 요청");
+                }
+            }
+            await Task.Delay(400);
+        }
+    }
+}
+```
+
 ---
 
 ## 부록 A. `assets/app.ico` 재생성
@@ -3773,7 +4238,7 @@ $bw.Flush(); $fs.Close()
 
 ```
 [ ] .NET SDK 10 설치 후  dotnet --version  이  10.0.x
-[ ] 소스 11개 파일(.cs) + .csproj + assets/app.ico 배치 (§2, §6)
+[ ] 소스 12개 파일(.cs) + .csproj + assets/app.ico 배치 (§2, §6)
 [ ] installer/ 6개 파일 배치, ps1 3개는 UTF-8 BOM 확인 (§6-M, §9-8)
 [ ] dotnet build -c Release  →  경고 0 / 오류 0 (§8-1)
 [ ] 실행 → 4개 번호 섹션 표시 (§8-2), launcher.log 에 [APP START] (§8-3)
@@ -3824,17 +4289,30 @@ dotnet build -c Release
 
 ### 8-2. 실행 검증
 `bin\Release\net10.0-windows\MyWorkQuickLauncher.exe` 실행 → 다음이 보여야 정상:
-- 제목 표시줄 `MY WORK QUICK LAUNCHER  ·  BUILD 20260915`
-- 번호 붙은 4개 섹션: `1. 바로가기`(테두리 박스), `2. 시트 분석 TOOL`, `3. 업무 메모 / 자주 쓰는 문구`, `4. 바탕화면 파일검색`(테두리 박스)
+- 제목 표시줄 `MY WORK QUICK LAUNCHER  ·  BUILD 20260916`
+- 번호 붙은 5개 섹션: `1. 바로가기`(테두리 박스), `2. 시트 분석 TOOL`, `3. 업무 메모 / 자주 쓰는 문구`, `4. 바탕화면 파일검색`(테두리 박스), `5. 파일자동읽기 폴더지정`
 - 하단 상태바 `준비됨 · Explorer에서 파일을 이 창으로 끌어오면 바로 등록됩니다 · F5 새로고침`
 
 ### 8-3. 로그 검증
 실행 직후 `%APPDATA%\MyWorkQuickLauncher\launcher.log` 마지막 줄들:
 ```
-2026-09-15 09:15:00.000 [APP START] BUILD=20260915 EXE=...\MyWorkQuickLauncher.exe
-2026-09-15 09:15:01.000 [SEARCH] start id=1 roots=C:\Users\<너>\Desktop filter=JPG / 이미지
-2026-09-15 09:15:01.000 [SEARCH] complete id=1 found=<바탕화면 최상위 파일 수>
+2026-09-16 10:24:20.000 [APP START] BUILD=20260916 EXE=...\MyWorkQuickLauncher.exe
+2026-09-16 10:24:25.000 [SEARCH] start id=1 roots=C:\Users\<너>\Desktop filter=JPG / 이미지
+2026-09-16 10:24:25.000 [SEARCH] complete id=1 found=<바탕화면 최상위 파일 수>
+2026-09-16 10:24:25.000 [WATCH] started <감시 폴더 경로>
 ```
+
+### 8-7. 파일자동읽기 폴더지정 검증
+1. `5. 파일자동읽기 폴더지정`에서 테스트용 빈 폴더를 감시 폴더로 지정, "1. 바로가기"에 등록된 아무 프로그램(테스트용으로는 메모장도 가능: `C:\Windows\System32\notepad.exe`)을 실행할 프로그램으로 선택, "자동 감시 사용" 체크 후 저장.
+2. 이미지 파일이 하나 이상 들어 있는 `.zip`을 그 폴더에 복사(다운로드가 아니어도, 탐색기에서 복사해 넣어도 동일하게 감지됨).
+3. **기대**: `launcher.log`에 아래 순서로 남고, 선택한 프로그램이 zip 경로를 인자로 받아 실행됨.
+   ```
+   [WATCH] zip 감지: <zip 경로>
+   [WATCH] 실행: <프로그램 이름> <- <zip 경로>
+   ```
+4. (선택) 같은 10초 안에 제목에 설정한 문자열(기본 "압축풀기")이 포함된 창을 띄워보면
+   `[WATCH] '<문자열>' 포함 창 닫기 요청` 로그와 함께 그 창이 자동으로 닫힌다.
+   개발 중 실제로 `cmd /c title 압축풀기테스트 ...` 로 만든 창을 이 방식으로 자동 종료시켜 확인함.
 - 바탕화면 파일 필터를 눌러보면 `[CLICK] file_filter=Excel` 등이 남습니다.
 - 업무 메모 타일 좌클릭 → `[PHRASE CLICK] 예시문구` + `[CLIPBOARD] 예시문구` 이 남고 실제로 붙여넣기가 됩니다.
 
@@ -3967,3 +4445,5 @@ powershell -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\Programs\MyWorkQuick
 | --- | --- |
 | 20260908 | v2 최초. 1차(Codex) 버전을 같은 명세로 재작성. UI 4개 번호 섹션, 시트 분석 TOOL 추가, 바탕화면 검색 비재귀화 |
 | 20260909 | "항상 위(TopMost)"를 저장/복원하지 않도록 변경 — 시작 시 항상 꺼짐, 체크박스는 세션 한정 (§9-13) |
+| 20260915 | GitHub 공개(v1.0.0) — 사내 서버 호스트명/실제 케이스 ID를 예시 값으로 치환, README/LICENSE/.gitignore/CHANGELOG/설치 스크립트 정리 |
+| 20260916 | `5. 파일자동읽기 폴더지정` 추가(v1.1.0) — 감시 폴더의 신규 zip을 감지해 등록된 프로그램 자동 실행 + 압축 확인 창 자동 닫기(`MainForm.FolderWatch.cs`, `Native.cs`에 `EnumWindows`/`WM_CLOSE` 추가) |

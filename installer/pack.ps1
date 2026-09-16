@@ -1,12 +1,12 @@
 ﻿<#
   배포 패키지(zip) 조립.
   publish\MyWorkQuickLauncher.exe + installer 스크립트 + 아이콘 + README 를 묶는다.
-  결과물: dist\MyWorkQuickLauncher-1.0.0-win-x64.zip
+  결과물: dist\MyWorkQuickLauncher-1.1.0-win-x64.zip
   (압축 해제 후 exe를 바로 실행하면 무설치, INSTALL.cmd를 실행하면 설치)
 #>
 $ErrorActionPreference = 'Stop'
 $root    = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Definition)
-$version = '1.0.0'
+$version = '1.1.0'
 $exe     = Join-Path $root 'publish\MyWorkQuickLauncher.exe'
 
 if (-not (Test-Path $exe)) {

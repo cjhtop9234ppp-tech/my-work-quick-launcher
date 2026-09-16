@@ -43,6 +43,16 @@ public sealed class AppSettings
     /// <summary>시트 분석 Tool에서 마지막으로 사용한 URL(다음 실행 시 복원).</summary>
     public string LeftSheetUrl { get; set; } = "";
     public string RightSheetUrl { get; set; } = "";
+
+    /// <summary>파일자동읽기 폴더지정: 이 폴더에 새 zip이 도착하면 감시한다(예: 다운로드 폴더).</summary>
+    public string WatchFolder { get; set; } = "";
+    public bool WatchEnabled { get; set; }
+
+    /// <summary>zip 도착 시 실행할 바로가기(App 종류)의 Id. Shortcuts 목록에서 선택한다.</summary>
+    public string WatchProgramShortcutId { get; set; } = "";
+
+    /// <summary>이 문자열을 제목에 포함한 창(예: 알집의 "압축풀기")이 뜨면 자동으로 닫는다. 비우면 끔.</summary>
+    public string WatchCloseWindowTitleContains { get; set; } = "압축풀기";
 }
 
 public sealed class AppData

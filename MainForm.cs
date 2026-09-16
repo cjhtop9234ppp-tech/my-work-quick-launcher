@@ -4,7 +4,7 @@ namespace MyWorkQuickLauncher;
 
 public sealed partial class MainForm : Form
 {
-    private const string BuildLabel = "20260915";
+    private const string BuildLabel = "20260916";
 
     private readonly AppData _data;
     private bool _miniMode;
@@ -68,6 +68,7 @@ public sealed partial class MainForm : Form
                 _iconDataDirty = false;
             }
             RunDesktopScan();
+            ApplyWatchState();
         };
         ResizeEnd += (_, _) => SaveGeometry();
     }
@@ -261,6 +262,7 @@ public sealed partial class MainForm : Form
             AddRow(BuildSheetAnalysisSection());
             AddRow(BuildNotesSection());
             AddRow(BuildDesktopSection());
+            AddRow(BuildFolderWatchSection());
         }
 
         _stack.ResumeLayout(true);
@@ -1226,6 +1228,7 @@ public sealed partial class MainForm : Form
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
         CancelDesktopScan();
+        StopWatching();
         _statusTimer?.Stop();
         _statusTimer?.Dispose();
         SaveGeometry();

@@ -1,15 +1,15 @@
 ; MY WORK QUICK LAUNCHER - Inno Setup 스크립트
-; 정식 설치 exe(MyWorkQuickLauncher-Setup-1.0.0.exe)를 만든다.
+; 정식 설치 exe(MyWorkQuickLauncher-Setup-1.1.0.exe)를 만든다.
 ;
 ; 사용법:
 ;   1) https://jrsoftware.org/isdl.php 에서 Inno Setup 6 설치
 ;   2) 먼저 상위 폴더에서  publish.cmd  실행 (publish\MyWorkQuickLauncher.exe 생성)
 ;   3) 이 파일을 Inno Setup Compiler로 열고 Build  (또는  iscc MyWorkQuickLauncher.iss)
-;   4) 결과물: installer\Output\MyWorkQuickLauncher-Setup-1.0.0.exe
+;   4) 결과물: installer\Output\MyWorkQuickLauncher-Setup-1.1.0.exe
 
 #define AppName "MY WORK QUICK LAUNCHER"
 #define AppId "MyWorkQuickLauncher"
-#define AppVersion "1.0.0"
+#define AppVersion "1.1.0"
 #define AppPublisher "Kim"
 #define AppExe "MyWorkQuickLauncher.exe"
 

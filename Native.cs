@@ -1,5 +1,6 @@
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace MyWorkQuickLauncher;
 
@@ -21,6 +22,46 @@ internal static class Native
 
     [DllImport("user32.dll")] private static extern bool DestroyIcon(IntPtr hIcon);
     [DllImport("user32.dll")] internal static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern int GetWindowTextLength(IntPtr hWnd);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
+    [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr hWnd);
+    [DllImport("user32.dll")] private static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+    private const uint WM_CLOSE = 0x0010;
+
+    /// <summary>보이는 최상위 창 중 제목에 <paramref name="titleContains"/>가 포함된 것을 모두 찾는다.</summary>
+    internal static List<IntPtr> FindVisibleWindowsByTitle(string titleContains)
+    {
+        var found = new List<IntPtr>();
+        if (string.IsNullOrWhiteSpace(titleContains)) return found;
+
+        EnumWindows((hWnd, _) =>
+        {
+            try
+            {
+                if (!IsWindowVisible(hWnd)) return true;
+                int len = GetWindowTextLength(hWnd);
+                if (len == 0) return true;
+                var sb = new StringBuilder(len + 1);
+                GetWindowText(hWnd, sb, sb.Capacity);
+                if (sb.ToString().Contains(titleContains, StringComparison.OrdinalIgnoreCase))
+                    found.Add(hWnd);
+            }
+            catch
+            {
+                // 개별 창 조회 실패는 전체 열거를 멈추지 않는다.
+            }
+            return true;
+        }, IntPtr.Zero);
+
+        return found;
+    }
+
+    /// <summary>창에 닫기(WM_CLOSE)를 보낸다. 강제 종료가 아니라 창 자신의 닫기 처리를 그대로 따른다.</summary>
+    internal static void RequestCloseWindow(IntPtr hWnd) => PostMessage(hWnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
 
     private const uint SHGFI_ICON = 0x000000100;
     private const uint SHGFI_LARGEICON = 0x000000000;
