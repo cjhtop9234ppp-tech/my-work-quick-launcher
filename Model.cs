@@ -40,11 +40,19 @@ public sealed class AppSettings
     public string Geometry { get; set; } = "1000x740+80+60";
     public string MiniGeometry { get; set; } = "320x260+80+60";
 
-    /// <summary>시트 분석 Tool - 작업항목 비교분석 탭에서 마지막으로 사용한 URL(다음 실행 시 복원).</summary>
+    /// <summary>
+    /// 시트 분석 TOOL - 작업항목 비교분석 탭에서 마지막으로 사용한 URL(다음 실행 시 복원).
+    /// A/B는 직접 비교용, C~F는 누락항목 통계보기(전체/공업사/특정업체/제작사별 지정업체)를
+    /// 병합해서 B와 비교하는 용도이며 A와는 배타적으로 쓰인다.
+    /// </summary>
     public string LeftSheetUrl { get; set; } = "";
     public string RightSheetUrl { get; set; } = "";
+    public string CompareSheetCUrl { get; set; } = "";
+    public string CompareSheetDUrl { get; set; } = "";
+    public string CompareSheetEUrl { get; set; } = "";
+    public string CompareSheetFUrl { get; set; } = "";
 
-    /// <summary>시트 분석 Tool - 작업항목 병합하기 탭(A~D 누락항목 통계보기)에서 마지막으로 사용한 URL.</summary>
+    /// <summary>시트 분석 TOOL - 작업항목 병합하기 탭(A~D 누락항목 통계보기)에서 마지막으로 사용한 URL.</summary>
     public string MergeSheetAUrl { get; set; } = "";
     public string MergeSheetBUrl { get; set; } = "";
     public string MergeSheetCUrl { get; set; } = "";

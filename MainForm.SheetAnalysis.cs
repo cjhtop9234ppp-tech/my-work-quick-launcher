@@ -3,8 +3,12 @@ namespace MyWorkQuickLauncher;
 public sealed partial class MainForm
 {
     // ---- 작업항목 비교분석 탭 ----
-    private TextBox _leftSheetBox = null!;
-    private TextBox _rightSheetBox = null!;
+    private TextBox _leftSheetBox = null!;   // A시트
+    private TextBox _rightSheetBox = null!;  // B시트
+    private TextBox _compareCBox = null!;    // C시트 · 7. 누락항목 통계보기(전체)
+    private TextBox _compareDBox = null!;    // D시트 · 8. 누락항목 통계보기(공업사)
+    private TextBox _compareEBox = null!;    // E시트 · 9. 누락항목 통계보기(특정업체)
+    private TextBox _compareFBox = null!;    // F시트 · 10. 누락항목 통계보기(제작사별 지정업체)
     private Button _analyzeButton = null!;
     private Label _sheetStatus = null!;
 
@@ -143,13 +147,18 @@ public sealed partial class MainForm
 
     // ================================================================== 작업항목 비교분석
 
+    /// <summary>
+    /// A시트(직접 비교)와 C~F시트(누락항목 통계보기 병합 비교)는 서로 배타적으로 쓰인다 - 한쪽에
+    /// 값이 있으면 다른 쪽 입력칸은 비활성화된다(B시트는 항상 입력 가능). 버튼 하나로 두 모드를
+    /// 자동 판별해 B시트와 비교한다.
+    /// </summary>
     private Control BuildSheetCompareTab()
     {
         var panel = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
             ColumnCount = 2,
-            RowCount = 3,
+            RowCount = 7,
             AutoSize = true,
             AutoSizeMode = AutoSizeMode.GrowAndShrink,
             BackColor = Theme.Card,
@@ -157,9 +166,8 @@ public sealed partial class MainForm
         };
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        for (int i = 0; i < 7; i++)
+            panel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         _leftSheetBox = AddSheetUrlRow(
             panel, 0,
@@ -172,6 +180,34 @@ public sealed partial class MainForm
             "B시트  ·  업로드 로그 (URL)",
             "http://<사내서버주소>:8180/ant/api/popup_detail.php?eseq=...",
             _data.Settings.RightSheetUrl);
+
+        _compareCBox = AddSheetUrlRow(
+            panel, 2,
+            "C시트  ·  7. 누락항목 통계보기(전체) (URL)",
+            "http://<사내서버주소>:8180/...  (A시트 대신 C~F시트를 병합해 비교할 때 사용)",
+            _data.Settings.CompareSheetCUrl);
+
+        _compareDBox = AddSheetUrlRow(
+            panel, 3,
+            "D시트  ·  8. 누락항목 통계보기(공업사) (URL)",
+            "http://<사내서버주소>:8180/...",
+            _data.Settings.CompareSheetDUrl);
+
+        _compareEBox = AddSheetUrlRow(
+            panel, 4,
+            "E시트  ·  9. 누락항목 통계보기(특정업체) (URL)",
+            "http://<사내서버주소>:8180/...",
+            _data.Settings.CompareSheetEUrl);
+
+        _compareFBox = AddSheetUrlRow(
+            panel, 5,
+            "F시트  ·  10. 누락항목 통계보기(제작사별 지정업체) (URL)",
+            "http://<사내서버주소>:8180/...",
+            _data.Settings.CompareSheetFUrl);
+
+        foreach (var box in new[] { _leftSheetBox, _compareCBox, _compareDBox, _compareEBox, _compareFBox })
+            box.TextChanged += (_, _) => UpdateCompareSheetExclusivity();
+        UpdateCompareSheetExclusivity();
 
         var actions = new FlowLayoutPanel
         {
@@ -190,7 +226,8 @@ public sealed partial class MainForm
 
         _sheetStatus = new Label
         {
-            Text = "두 시트의 URL을 넣고 비교하면, B시트에 없는 작업항목을 노란색으로 보여줍니다.",
+            Text = "A+B시트로 직접 비교하거나, B+C(~F)시트로 병합 비교할 수 있습니다(A와 C~F는 동시에 쓸 수 없음). "
+                   + "B시트에 없는 작업항목을 노란색으로 보여줍니다.",
             AutoSize = true,
             ForeColor = Theme.Muted,
             Font = Theme.Font8,
@@ -199,44 +236,97 @@ public sealed partial class MainForm
         };
         actions.Controls.Add(_sheetStatus);
 
-        panel.Controls.Add(actions, 1, 2);
+        panel.Controls.Add(actions, 1, 6);
 
         return panel;
     }
 
+    /// <summary>
+    /// A시트와 C~F시트는 배타적이다. 한쪽에 값이 있으면 다른 쪽 입력칸을 잠근다(B시트는 항상 가능).
+    /// 옛 데이터 등으로 양쪽에 값이 동시에 남아 있는 경우에는 A시트를 우선해 잠기지 않게 한다.
+    /// </summary>
+    private void UpdateCompareSheetExclusivity()
+    {
+        bool aFilled = _leftSheetBox.Text.Trim().Length > 0;
+        var mergeBoxes = new[] { _compareCBox, _compareDBox, _compareEBox, _compareFBox };
+        bool mergeFilled = mergeBoxes.Any(b => b.Text.Trim().Length > 0);
+
+        foreach (var box in mergeBoxes)
+            box.Enabled = !aFilled;
+
+        _leftSheetBox.Enabled = aFilled || !mergeFilled;
+    }
+
     private async void RunSheetAnalysis()
     {
-        string leftUrl = _leftSheetBox.Text.Trim();
-        string rightUrl = _rightSheetBox.Text.Trim();
+        string aUrl = _leftSheetBox.Text.Trim();
+        string bUrl = _rightSheetBox.Text.Trim();
 
-        if (!SheetSource.LooksLikeUrl(leftUrl) || !SheetSource.LooksLikeUrl(rightUrl))
+        var mergeSlots = new (char Label, string Url)[]
+        {
+            ('C', _compareCBox.Text.Trim()),
+            ('D', _compareDBox.Text.Trim()),
+            ('E', _compareEBox.Text.Trim()),
+            ('F', _compareFBox.Text.Trim()),
+        };
+        bool useMerge = aUrl.Length == 0 && mergeSlots[0].Url.Length > 0;
+
+        if (!SheetSource.LooksLikeUrl(bUrl))
         {
             MessageBox.Show(
-                "A시트와 B시트의 URL을 각각 한 개씩 http(s):// 형식으로 입력하세요.",
-                "URL 확인",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
+                "B시트의 URL을 http(s):// 형식으로 입력하세요.",
+                "URL 확인", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
+        }
+
+        List<(char Label, string Url)> leftSources;
+        string leftLabel;
+
+        if (useMerge)
+        {
+            leftSources = mergeSlots.Where(s => s.Url.Length > 0).ToList();
+            if (leftSources.Any(s => !SheetSource.LooksLikeUrl(s.Url)))
+            {
+                MessageBox.Show(
+                    "C~F시트의 URL을 http(s):// 형식으로 입력하세요(C시트부터 순서대로 채워야 합니다).",
+                    "URL 확인", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            leftLabel = string.Join("+", leftSources.Select(s => s.Label)) + "시트(병합)";
+        }
+        else
+        {
+            if (!SheetSource.LooksLikeUrl(aUrl))
+            {
+                MessageBox.Show(
+                    "A시트의 URL을 입력하거나, A시트를 비워두고 C시트부터 채워 병합 비교를 사용하세요.",
+                    "URL 확인", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            leftSources = new List<(char, string)> { ('A', aUrl) };
+            leftLabel = "A시트";
         }
 
         _analyzeButton.Enabled = false;
         _sheetStatus.ForeColor = Theme.Muted;
         _sheetStatus.Text = "시트를 불러오는 중...";
-        AppStore.Log("[SHEET] analyze start");
+        AppStore.Log($"[SHEET] analyze start mode={(useMerge ? "merge" : "direct")}");
 
         try
         {
-            var leftTask = SheetSource.FetchAsync(leftUrl);
-            var rightTask = SheetSource.FetchAsync(rightUrl);
-            await Task.WhenAll(leftTask, rightTask);
+            var rightTask = SheetSource.FetchAsync(bUrl);
+            var leftTasks = leftSources.Select(s => SheetSource.FetchAsync(s.Url)).ToList();
+            await Task.WhenAll(leftTasks.Prepend(rightTask));
 
-            var left = leftTask.Result;
             var right = rightTask.Result;
+            var left = useMerge
+                ? SheetSource.Merge(leftTasks.Select(t => t.Result))
+                : leftTasks[0].Result;
 
             if (left.Count == 0)
             {
                 _sheetStatus.ForeColor = Theme.Danger;
-                _sheetStatus.Text = "A시트에서 작업항목을 찾지 못했습니다. URL을 확인하세요.";
+                _sheetStatus.Text = $"{leftLabel}에서 작업항목을 찾지 못했습니다. URL을 확인하세요.";
                 return;
             }
 
@@ -251,16 +341,20 @@ public sealed partial class MainForm
 
             int missingRows = left.Count(r => missingKeys.Contains(SheetSource.ItemKey(r.Item)));
 
-            _data.Settings.LeftSheetUrl = leftUrl;
-            _data.Settings.RightSheetUrl = rightUrl;
+            _data.Settings.LeftSheetUrl = aUrl;
+            _data.Settings.RightSheetUrl = bUrl;
+            _data.Settings.CompareSheetCUrl = mergeSlots[0].Url;
+            _data.Settings.CompareSheetDUrl = mergeSlots[1].Url;
+            _data.Settings.CompareSheetEUrl = mergeSlots[2].Url;
+            _data.Settings.CompareSheetFUrl = mergeSlots[3].Url;
             Persist();
 
             _sheetStatus.ForeColor = missingKeys.Count > 0 ? Theme.Accent : Theme.Muted;
             _sheetStatus.Text =
-                $"A시트 {left.Count}행 · B시트 {right.Count}행 · B시트에 없는 작업항목 {missingKeys.Count}건({missingRows}행)";
-            AppStore.Log($"[SHEET] analyze done left={left.Count} right={right.Count} missing={missingKeys.Count}");
+                $"{leftLabel} {left.Count}행 · B시트 {right.Count}행 · B시트에 없는 작업항목 {missingKeys.Count}건({missingRows}행)";
+            AppStore.Log($"[SHEET] analyze done mode={(useMerge ? "merge" : "direct")} left={left.Count} right={right.Count} missing={missingKeys.Count}");
 
-            using var dialog = new SheetAnalysisDialog(left, missingKeys, right.Count, leftUrl, SetClipboardText);
+            using var dialog = new SheetAnalysisDialog(left, missingKeys, right.Count, leftLabel, SetClipboardText);
             ShowOwned(dialog);
         }
         catch (Exception ex)

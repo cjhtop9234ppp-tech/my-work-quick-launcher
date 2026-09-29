@@ -3,8 +3,9 @@ using System.Diagnostics;
 namespace MyWorkQuickLauncher;
 
 /// <summary>
-/// 시트 분석 결과 팝업. A시트의 전체 견적을 보여주고, B시트에 없는 작업항목 행을
-/// 노란색으로 음영 처리한다. 노란색 행을 클릭하면 업무 메모와 동일하게 클립보드로 복사된다.
+/// 시트 분석 결과 팝업. 기준 시트(A시트 또는 C~F시트를 병합한 결과)의 전체 견적을 보여주고,
+/// B시트에 없는 작업항목 행을 노란색으로 음영 처리한다. 노란색 행을 클릭하면 업무 메모와
+/// 동일하게 클립보드로 복사된다.
 /// </summary>
 public sealed class SheetAnalysisDialog : Form
 {
@@ -22,7 +23,7 @@ public sealed class SheetAnalysisDialog : Form
         IReadOnlyList<SheetRow> leftRows,
         HashSet<string> missingKeys,
         int rightRowCount,
-        string leftUrl,
+        string leftLabel,
         Action<string> copy)
     {
         _rows = leftRows;
@@ -50,7 +51,7 @@ public sealed class SheetAnalysisDialog : Form
 
         header.Controls.Add(new Label
         {
-            Text = $"A시트 {leftRows.Count}행   ·   B시트 {rightRowCount}행   ·   "
+            Text = $"{leftLabel} {leftRows.Count}행   ·   B시트 {rightRowCount}행   ·   "
                    + $"B시트에 없는 작업항목 {missingItems.Count}건",
             AutoSize = true,
             Font = Theme.Font11B,

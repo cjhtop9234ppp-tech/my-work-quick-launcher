@@ -15,7 +15,7 @@ public sealed record SheetRow(
     string Labor);
 
 /// <summary>
-/// "작업항목 병합하기" 결과 한 행. <paramref name="Origin"/>은 이 행이 A~D 중 어느 시트에서
+/// "작업항목 병합하기" 탭 결과 한 행. <paramref name="Origin"/>은 이 행이 A~D 중 어느 시트에서
 /// 왔는지('A'~'D')를 나타내며, 화면/엑셀에서 시트별 색상 구분에 쓰인다.
 /// </summary>
 public sealed record MergedSheetRow(SheetRow Row, char Origin);
@@ -103,4 +103,24 @@ public static class SheetSource
     /// <summary>작업항목 비교 키: 공백을 모두 제거해 표기 차이를 흡수한다.</summary>
     public static string ItemKey(string item)
         => Regex.Replace(item ?? "", @"\s+", "").Trim();
+
+    /// <summary>
+    /// 여러 시트를 작업항목 기준 중복 없이 순서대로 병합한다. 먼저 온 시트의 값을 먼저 나열하고,
+    /// 뒤 시트는 앞에서 나온 작업항목을 건너뛴다. 같은 시트 안에서는 원래 행 순서를 유지한다.
+    /// </summary>
+    public static List<SheetRow> Merge(IEnumerable<List<SheetRow>> sheetsInOrder)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var merged = new List<SheetRow>();
+        foreach (var sheet in sheetsInOrder)
+        {
+            foreach (var row in sheet)
+            {
+                string key = ItemKey(row.Item);
+                if (key.Length == 0 || !seen.Add(key)) continue;
+                merged.Add(row);
+            }
+        }
+        return merged;
+    }
 }
