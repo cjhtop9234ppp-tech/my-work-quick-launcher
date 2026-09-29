@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace MyWorkQuickLauncher;
 
 /// <summary>
@@ -72,15 +74,31 @@ public sealed class SheetAnalysisDialog : Form
         _onlyMissing.CheckedChanged += (_, _) => ApplyRowFilter();
         header.Controls.Add(_onlyMissing);
 
+        var actionsRow = new FlowLayoutPanel
+        {
+            Location = new Point(168, 44),
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            FlowDirection = FlowDirection.LeftToRight,
+            WrapContents = false,
+            BackColor = Theme.Card,
+        };
+
         var copyAll = Theme.ActionButton("누락 항목 전체 복사");
-        copyAll.Location = new Point(170, 48);
+        copyAll.Margin = new Padding(0, 0, 8, 0);
         copyAll.Enabled = missingItems.Count > 0;
         copyAll.Click += (_, _) =>
         {
             _copy(string.Join(Environment.NewLine, missingItems));
             ShowFeedback($"누락 항목 {missingItems.Count}건을 복사했습니다.");
         };
-        header.Controls.Add(copyAll);
+        actionsRow.Controls.Add(copyAll);
+
+        var exportExcel = Theme.ActionButton("엑셀로 다운로드");
+        exportExcel.Click += (_, _) => ExportToExcel();
+        actionsRow.Controls.Add(exportExcel);
+
+        header.Controls.Add(actionsRow);
 
         Controls.Add(header);
 
@@ -257,5 +275,82 @@ public sealed class SheetAnalysisDialog : Form
     {
         _feedback.Text = message;
         _feedback.ForeColor = Theme.Accent;
+    }
+
+    /// <summary>
+    /// 지금 화면에 보이는 행(누락 항목만 보기 필터 반영)을 화면과 같은 볼드/노란색 그대로
+    /// .xlsx로 저장한다. 외부 라이브러리 없이 <see cref="Xlsx"/>로 직접 만든다.
+    /// </summary>
+    private void ExportToExcel()
+    {
+        var visibleRows = _grid.Rows.Cast<DataGridViewRow>().Where(r => r.Visible).ToList();
+        if (visibleRows.Count == 0)
+        {
+            MessageBox.Show("내보낼 행이 없습니다.", "엑셀 다운로드", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            return;
+        }
+
+        using var dialog = new SaveFileDialog
+        {
+            Title = "시트 분석 결과 - 엑셀로 저장",
+            Filter = "Excel 통합 문서 (*.xlsx)|*.xlsx",
+            FileName = $"시트분석결과_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx",
+            DefaultExt = "xlsx",
+            AddExtension = true,
+        };
+        if (dialog.ShowDialog(this) != DialogResult.OK) return;
+
+        try
+        {
+            var sheetRows = new List<IReadOnlyList<Xlsx.Cell>>
+            {
+                new List<Xlsx.Cell>
+                {
+                    new("번호", Xlsx.HeaderLeft),
+                    new("작업항목", Xlsx.HeaderLeft),
+                    new("작업", Xlsx.HeaderCenter),
+                    new("시간/청구", Xlsx.HeaderRight),
+                    new("부품금액", Xlsx.HeaderRight),
+                    new("공임", Xlsx.HeaderRight),
+                },
+            };
+
+            foreach (var gridRow in visibleRows)
+            {
+                if (gridRow.Tag is not SheetRow row) continue;
+                bool missing = IsMissing(row);
+                var left = missing ? Xlsx.MissingLeft : Xlsx.NormalLeft;
+                var center = missing ? Xlsx.MissingCenter : Xlsx.NormalCenter;
+                var general = missing ? Xlsx.MissingRightGeneral : Xlsx.NormalRightGeneral;
+                var money = missing ? Xlsx.MissingRightMoney : Xlsx.NormalRightMoney;
+
+                sheetRows.Add(new List<Xlsx.Cell>
+                {
+                    new(row.No, left),
+                    new(row.Item, left),
+                    new(row.Work, center),
+                    new(row.TimeClaim, general),
+                    new(row.PartAmount, money),
+                    new(row.Labor, money),
+                });
+            }
+
+            Xlsx.Save(dialog.FileName, "시트분석결과", new[] { 8, 34, 10, 10, 12, 12 }, sheetRows);
+
+            AppStore.Log($"[SHEET] excel export -> {dialog.FileName} rows={sheetRows.Count - 1}");
+            ShowFeedback($"엑셀로 저장됨: {Path.GetFileName(dialog.FileName)}");
+
+            if (MessageBox.Show("엑셀 파일로 저장했습니다. 지금 열까요?", "저장 완료",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                Process.Start(new ProcessStartInfo(dialog.FileName) { UseShellExecute = true });
+            }
+        }
+        catch (Exception ex)
+        {
+            AppStore.Log("[SHEET] excel export failed", ex);
+            MessageBox.Show($"엑셀 저장에 실패했습니다.\n\n{ex.Message}", "저장 실패",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 }

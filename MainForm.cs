@@ -1,10 +1,16 @@
 using System.Diagnostics;
+using System.Reflection;
 
 namespace MyWorkQuickLauncher;
 
 public sealed partial class MainForm : Form
 {
-    private const string BuildLabel = "20260916";
+    // 버전은 .csproj의 <Version>에서만 가져온다(설치 스크립트/Inno Setup의 버전과 항상 같은 값으로 맞출 것).
+    // 프로젝트 공통 규칙(Kim's programe/CLAUDE.md): 창을 띄우는 모든 실행파일은 제목 옆에 버전을 표시한다.
+    // '+' 뒤에 붙는 git 커밋 해시(소스 컨트롤 정보)는 창 제목에 필요 없으므로 잘라낸다.
+    private static readonly string AppVersion =
+        (Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+            ?? "0.0.0").Split('+')[0];
 
     private readonly AppData _data;
     private bool _miniMode;
@@ -31,10 +37,10 @@ public sealed partial class MainForm : Form
         _data = AppStore.Load();
         NormalizeOrder();
         _miniMode = _data.Settings.MiniMode;
-        AppStore.Log($"[APP START] BUILD={BuildLabel} EXE={Environment.ProcessPath}");
+        AppStore.Log($"[APP START] VERSION={AppVersion} EXE={Environment.ProcessPath}");
 
         SuspendLayout();
-        Text = $"MY WORK QUICK LAUNCHER  ·  BUILD {BuildLabel}";
+        Text = $"MY WORK QUICK LAUNCHER v{AppVersion} - 업무 퀵런처";
         Font = Theme.Font9;
         BackColor = Theme.Bg;
         MinimumSize = new Size(480, 360);
