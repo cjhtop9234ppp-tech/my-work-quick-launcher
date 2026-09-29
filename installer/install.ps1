@@ -12,7 +12,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $AppName    = 'MY WORK QUICK LAUNCHER'
 $AppId      = 'MyWorkQuickLauncher'
-$Version    = '1.4.0'
+$Version    = '1.4.1'
 $Publisher  = 'Kim'
 $ExeName    = 'MyWorkQuickLauncher.exe'
 $IconName   = 'app.ico'

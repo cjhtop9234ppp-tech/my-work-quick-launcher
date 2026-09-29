@@ -40,6 +40,9 @@ public sealed class AppSettings
     public string Geometry { get; set; } = "1000x740+80+60";
     public string MiniGeometry { get; set; } = "320x260+80+60";
 
+    /// <summary>"작업항목 비교 분석" 결과 팝업의 마지막 창 크기("WxH"). 위치는 매번 본창 기준 중앙으로 다시 잡는다.</summary>
+    public string SheetAnalysisDialogSize { get; set; } = "900x640";
+
     /// <summary>
     /// 시트 분석 TOOL - 작업항목 비교분석 탭에서 마지막으로 사용한 URL(다음 실행 시 복원).
     /// A/B는 직접 비교용, C~F는 누락항목 통계보기(전체/공업사/특정업체/제작사별 지정업체)를

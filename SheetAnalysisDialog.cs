@@ -24,6 +24,7 @@ public sealed class SheetAnalysisDialog : Form
         HashSet<string> missingKeys,
         int rightRowCount,
         string leftLabel,
+        string dialogSize,
         Action<string> copy)
     {
         _rows = leftRows;
@@ -37,8 +38,8 @@ public sealed class SheetAnalysisDialog : Form
             .ToList();
 
         Text = "시트 분석 결과";
-        ClientSize = new Size(900, 640);
         MinimumSize = new Size(620, 420);
+        Size = ParseDialogSize(dialogSize);
         Font = Theme.Font9;
         BackColor = Theme.Bg;
         FormBorderStyle = FormBorderStyle.Sizable;
@@ -277,6 +278,25 @@ public sealed class SheetAnalysisDialog : Form
         _feedback.Text = message;
         _feedback.ForeColor = Theme.Accent;
     }
+
+    /// <summary>"WxH" 문자열을 창 크기로 되살린다. 값이 없거나 깨졌으면 기본 크기(900x640)로 되돌아간다.</summary>
+    private static Size ParseDialogSize(string? value)
+    {
+        try
+        {
+            var parts = (value ?? "").Split('x');
+            if (parts.Length == 2)
+                return new Size(int.Parse(parts[0]), int.Parse(parts[1]));
+        }
+        catch
+        {
+            // 무시하고 기본 크기 사용.
+        }
+        return new Size(900, 640);
+    }
+
+    /// <summary>현재 창 크기를 "WxH" 문자열로 돌려준다. 호출자가 다음 번 복원을 위해 저장한다.</summary>
+    public string CurrentDialogSize => $"{Width}x{Height}";
 
     /// <summary>
     /// 지금 화면에 보이는 행(누락 항목만 보기 필터 반영)을 화면과 같은 볼드/노란색 그대로

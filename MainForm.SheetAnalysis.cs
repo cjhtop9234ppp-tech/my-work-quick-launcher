@@ -66,6 +66,11 @@ public sealed partial class MainForm
         headRow.Controls.Add(BuildToolTabButton("작업항목 비교분석", 0));
         headRow.Controls.Add(BuildToolTabButton("작업항목 병합하기", 1));
 
+        var resetUrlsButton = Theme.ActionButton("URL 입력 초기화");
+        resetUrlsButton.Margin = new Padding(12, 4, 0, 0);
+        resetUrlsButton.Click += (_, _) => ClearActiveTabUrls();
+        headRow.Controls.Add(resetUrlsButton);
+
         shell.Controls.Add(headRow, 0, 0);
 
         var card = new TableLayoutPanel
@@ -118,6 +123,41 @@ public sealed partial class MainForm
             RebuildStack();
         };
         return button;
+    }
+
+    /// <summary>
+    /// "URL 입력 초기화" 버튼: 지금 선택된 탭의 URL 입력칸만 비운다(다른 탭 값은 건드리지 않는다).
+    /// 두 탭은 매 렌더링마다 한쪽 컨트롤만 새로 만들어지므로, 비활성 탭의 필드는 건드리지 않는다.
+    /// </summary>
+    private void ClearActiveTabUrls()
+    {
+        if (_sheetToolTab == 0)
+        {
+            _leftSheetBox.Clear();
+            _rightSheetBox.Clear();
+            _compareCBox.Clear();
+            _compareDBox.Clear();
+            _compareEBox.Clear();
+            _compareFBox.Clear();
+            _data.Settings.LeftSheetUrl = "";
+            _data.Settings.RightSheetUrl = "";
+            _data.Settings.CompareSheetCUrl = "";
+            _data.Settings.CompareSheetDUrl = "";
+            _data.Settings.CompareSheetEUrl = "";
+            _data.Settings.CompareSheetFUrl = "";
+        }
+        else
+        {
+            _mergeSheetABox.Clear();
+            _mergeSheetBBox.Clear();
+            _mergeSheetCBox.Clear();
+            _mergeSheetDBox.Clear();
+            _data.Settings.MergeSheetAUrl = "";
+            _data.Settings.MergeSheetBUrl = "";
+            _data.Settings.MergeSheetCUrl = "";
+            _data.Settings.MergeSheetDUrl = "";
+        }
+        Persist();
     }
 
     /// <summary>URL 라벨 + 입력칸 한 행을 <paramref name="panel"/>의 <paramref name="row"/>번째 줄에 채운다.</summary>
@@ -354,8 +394,12 @@ public sealed partial class MainForm
                 $"{leftLabel} {left.Count}행 · B시트 {right.Count}행 · B시트에 없는 작업항목 {missingKeys.Count}건({missingRows}행)";
             AppStore.Log($"[SHEET] analyze done mode={(useMerge ? "merge" : "direct")} left={left.Count} right={right.Count} missing={missingKeys.Count}");
 
-            using var dialog = new SheetAnalysisDialog(left, missingKeys, right.Count, leftLabel, SetClipboardText);
+            using var dialog = new SheetAnalysisDialog(
+                left, missingKeys, right.Count, leftLabel, _data.Settings.SheetAnalysisDialogSize, SetClipboardText);
             ShowOwned(dialog);
+
+            _data.Settings.SheetAnalysisDialogSize = dialog.CurrentDialogSize;
+            Persist();
         }
         catch (Exception ex)
         {
