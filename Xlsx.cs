@@ -41,6 +41,12 @@ internal static class Xlsx
     internal static readonly CellStyle NormalRightGeneral = NormalLeft with { Align = "right", Numeric = true };
     internal static readonly CellStyle NormalRightMoney = NormalLeft with { Align = "right", Numeric = true, NumberFormat = MoneyFormat };
 
+    // ---- 호출자가 지정한 배경색을 쓰는 스타일(예: 작업항목 병합 결과의 출처 A~D 색상 구분) ----
+    internal static CellStyle TintedLeft(string fillArgb) => new(false, fillArgb, null, "left", false, null);
+    internal static CellStyle TintedCenter(string fillArgb) => TintedLeft(fillArgb) with { Align = "center" };
+    internal static CellStyle TintedRightGeneral(string fillArgb) => TintedLeft(fillArgb) with { Align = "right", Numeric = true };
+    internal static CellStyle TintedRightMoney(string fillArgb) => TintedLeft(fillArgb) with { Align = "right", Numeric = true, NumberFormat = MoneyFormat };
+
     internal sealed class Cell
     {
         public string Text { get; }

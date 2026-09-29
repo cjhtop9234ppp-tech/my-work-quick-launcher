@@ -15,6 +15,12 @@ public sealed record SheetRow(
     string Labor);
 
 /// <summary>
+/// "작업항목 병합하기" 결과 한 행. <paramref name="Origin"/>은 이 행이 A~D 중 어느 시트에서
+/// 왔는지('A'~'D')를 나타내며, 화면/엑셀에서 시트별 색상 구분에 쓰인다.
+/// </summary>
+public sealed record MergedSheetRow(SheetRow Row, char Origin);
+
+/// <summary>
 /// gomail 팝업 URL을 받아 견적 테이블을 파싱한다.
 /// popup_detail1 / popup_detail2 / api/popup_detail 세 형식 모두 &lt;tr class='tableRow'&gt; 행에
 /// [no, 작업항목, 작업, 시간/청구, 부품금액, 공임] 순으로 셀이 들어 있다.

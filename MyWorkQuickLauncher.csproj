@@ -9,7 +9,7 @@
     <LangVersion>latest</LangVersion>
     <AssemblyName>MyWorkQuickLauncher</AssemblyName>
     <RootNamespace>MyWorkQuickLauncher</RootNamespace>
-    <Version>1.2.0</Version>
+    <Version>1.3.0</Version>
     <Product>MY WORK QUICK LAUNCHER</Product>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <!-- git 커밋 해시가 버전 뒤에 "+abcdef..."로 붙는 것을 막는다(창 제목에 그대로 노출되므로). -->

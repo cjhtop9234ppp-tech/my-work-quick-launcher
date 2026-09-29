@@ -40,9 +40,15 @@ public sealed class AppSettings
     public string Geometry { get; set; } = "1000x740+80+60";
     public string MiniGeometry { get; set; } = "320x260+80+60";
 
-    /// <summary>시트 분석 Tool에서 마지막으로 사용한 URL(다음 실행 시 복원).</summary>
+    /// <summary>시트 분석 Tool - 작업항목 비교분석 탭에서 마지막으로 사용한 URL(다음 실행 시 복원).</summary>
     public string LeftSheetUrl { get; set; } = "";
     public string RightSheetUrl { get; set; } = "";
+
+    /// <summary>시트 분석 Tool - 작업항목 병합하기 탭(A~D 누락항목 통계보기)에서 마지막으로 사용한 URL.</summary>
+    public string MergeSheetAUrl { get; set; } = "";
+    public string MergeSheetBUrl { get; set; } = "";
+    public string MergeSheetCUrl { get; set; } = "";
+    public string MergeSheetDUrl { get; set; } = "";
 
     /// <summary>파일자동읽기 폴더지정: 이 폴더에 새 zip이 도착하면 감시한다(예: 다운로드 폴더).</summary>
     public string WatchFolder { get; set; } = "";
